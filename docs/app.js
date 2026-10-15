@@ -71,7 +71,9 @@ async function loadCatalog() {
     })
   );
 
-  all = items.sort((a, b) => Number(b.downloadable) - Number(a.downloadable) || b.stars - a.stars);
+  all = items
+    .filter((i) => i.downloadable && Array.isArray(i.assets) && i.assets.length > 0)
+    .sort((a, b) => b.stars - a.stars);
   $('#refresh-time').textContent = new Date().toLocaleString('tr-TR');
   writeCache(all);
   updateStats();
@@ -95,8 +97,11 @@ function readCache() {
 }
 
 function updateStats() {
+  const fresh = all.filter(
+    (i) => i.publishedAt && Date.now() - new Date(i.publishedAt).getTime() < 30 * 86400000
+  ).length;
   $('#stat-repos').textContent = all.length;
-  $('#stat-downloads').textContent = all.filter((i) => i.downloadable).length;
+  $('#stat-downloads').textContent = fresh;
   $('#stat-wl').textContent = all.reduce((s, i) => s + i.stars, 0);
 }
 
@@ -113,27 +118,30 @@ function render() {
   const items = all.filter((i) => !q || i.name.toLowerCase().includes(q) || i.description.toLowerCase().includes(q));
   grid.innerHTML = '';
   $('#grid-empty').classList.toggle('hidden', items.length > 0);
+  $('#grid-empty').textContent =
+    all.length === 0 ? 'Şimdilik yayınlanmış (sürümlü) uygulama yok, yakında eklenecek.' : 'Eşleşen uygulama yok.';
 
   for (const app of items) {
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
       <div class="card-head">
-        <img class="card-logo" src="${app.logo}" alt="" referrerpolicy="no-referrer" loading="lazy" />
+        <img class="card-logo" src="${app.logo}" alt="" referrerpolicy="no-referrer" loading="lazy"
+             onerror="this.style.visibility='hidden'" />
         <div>
           <div class="card-title">${esc(app.name)}</div>
-          <div class="card-ver">${app.tag ? 'Sürüm ' + esc(app.tag) : 'Yakında'}</div>
+          <div class="card-ver">${app.tag ? 'Sürüm ' + esc(app.tag) : ''}</div>
         </div>
       </div>
       <div class="card-desc">${esc(app.description)}</div>
       <div class="card-meta">
         <span>★ ${app.stars}</span>
         ${app.publishedAt ? `<span>◷ ${new Date(app.publishedAt).toLocaleDateString('tr-TR')}</span>` : ''}
-        ${app.downloadable ? '<span class="pill">HAZIR</span>' : '<span class="pill off">YAKINDA</span>'}
+        ${app.assets.length > 1 ? `<span>${app.assets.length} dosya seçeneği</span>` : ''}
+        <span class="pill">HAZIR</span>
       </div>
       <div class="card-actions">
-        <a class="btn" href="${app.htmlUrl}" target="_blank" rel="noopener">Detay</a>
-        <button class="btn primary" data-dl ${app.downloadable ? '' : 'disabled'}>İndir</button>
+        <button class="btn" data-dl>İndir</button>
       </div>`;
 
     const btn = card.querySelector('[data-dl]');

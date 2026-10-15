@@ -102,7 +102,10 @@ function toPng(rgba, size) {
 
 const outDir = path.join(__dirname, '..', 'renderer', 'assets');
 fs.mkdirSync(outDir, { recursive: true });
-const png = toPng(drawIcon(64), 64);
-fs.writeFileSync(path.join(outDir, 'tray.png'), png);
-fs.writeFileSync(path.join(outDir, 'icon.png'), png);
-console.log('OK:', path.join(outDir, 'tray.png'), png.length, 'bytes');
+const png64 = toPng(drawIcon(64), 64);
+const png256 = toPng(drawIcon(256), 256);
+fs.writeFileSync(path.join(outDir, 'tray.png'), png64);
+fs.writeFileSync(path.join(outDir, 'icon.png'), png256);
+fs.writeFileSync(path.join(__dirname, '..', 'build', 'icon.png'), (fs.mkdirSync(path.join(__dirname, '..', 'build'), { recursive: true }), png256));
+console.log('OK:', path.join(outDir, 'tray.png'), png64.length, 'bytes');
+console.log('OK:', path.join(outDir, 'icon.png'), png256.length, 'bytes (256x256)');

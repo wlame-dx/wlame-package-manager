@@ -11,9 +11,39 @@
     "test": "node --test \"test/*.test.js\"",
     "test:api": "node test/integration.api.js",
     "icons": "node scripts/gen-icon.js",
+    "dist": "electron-builder --win nsis",
     "smoke": "electron . --smoke"
   },
+  "build": {
+    "appId": "dx.wlame.hub",
+    "productName": "WLAME Hub",
+    "files": [
+      "main/**/*",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "WLAME Hub",
+      "artifactName": "WLAME-Hub-Setup-${version}.exe"
+    }
+  },
   "devDependencies": {
-    "electron": "^44.7.2"
+    "electron": "^44.7.2",
+    "electron-builder": "^26.15.3"
   }
 }

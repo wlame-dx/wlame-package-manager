@@ -2,6 +2,11 @@
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 
+/* Yayında olan (release + .exe içeren) uygulamalar dışarıdan gizlenir. */
+function activeApps(list) {
+  return (list || []).filter((c) => c && c.downloadable && Array.isArray(c.exeAssets) && c.exeAssets.length > 0);
+}
+
 const state = {
   catalog: [],
   installed: [],
@@ -61,7 +66,7 @@ function renderCatalog() {
   if (items.length === 0) {
     grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
       ${state.catalog.length === 0
-        ? 'Şimdilik indirilebilir uygulama yok.<br>Yeni uygulamalar eklendikçe burada belirecek.'
+        ? 'Şimdilik yayınlanmış (sürümlü) uygulama yok.<br>Yeni uygulamalar eklendikçe burada belirecek.'
         : 'Eşleşen uygulama yok.'}
     </div>`;
     return;
@@ -71,27 +76,27 @@ function renderCatalog() {
   for (const app of items) {
     const card = document.createElement('div');
     card.className = 'card';
-    const pill = app.downloadable
-      ? `<span class="pill">İNDİRİLEBİLİR</span>`
-      : `<span class="pill off">RELEASE YOK</span>`;
+    const pill = `<span class="pill">HAZIR</span>`;
 
     card.innerHTML = `
       <div class="card-head">
-        <img class="card-logo" src="${app.logo}" alt="" referrerpolicy="no-referrer" />
+        <img class="card-logo" src="${app.logo}" alt="" referrerpolicy="no-referrer"
+             onerror="this.style.visibility='hidden'" />
         <div>
           <div class="card-title">${escapeHtml(app.name)}</div>
-          <div class="card-ver">${app.latestTag ? 'Sürüm ' + escapeHtml(app.latestTag) : 'Henüz sürüm yok'}</div>
+          <div class="card-ver">${app.latestTag ? 'Sürüm ' + escapeHtml(app.latestTag) : ''}</div>
         </div>
       </div>
-      <div class="card-desc">${escapeHtml(app.description || 'Açıklama yok.')}</div>
+      <div class="card-desc">${escapeHtml(app.description || 'Açıklama yakında.')}</div>
       <div class="card-meta">
         <span>★ ${app.stars}</span>
         ${app.publishedAt ? `<span>◷ ${new Date(app.publishedAt).toLocaleDateString('tr-TR')}</span>` : ''}
+        ${app.exeAssets.length > 1 ? `<span>${app.exeAssets.length} dosya seçeneği</span>` : ''}
         ${pill}
       </div>
       <div class="card-actions">
-        <button class="btn ghost" data-act="readme">README</button>
-        <button class="btn primary" data-act="download" ${app.downloadable ? '' : 'disabled'}>İndir</button>
+        <button class="btn ghost" data-act="readme">Bilgi</button>
+        <button class="btn primary" data-act="download">İndir</button>
       </div>`;
 
     card.querySelector('[data-act="download"]').addEventListener('click', () => openDownload(app));
@@ -265,7 +270,7 @@ function bindEvents() {
     $('#btn-refresh').disabled = true;
     try {
       const res = await window.hub.refreshCatalog();
-      state.catalog = res.apps || [];
+      state.catalog = activeApps(res.apps || []);
       renderCatalog();
       setStatus(res.stale ? 'Önbellekten gösteriliyor.' : `Güncellendi (${state.catalog.length} uygulama).`);
       if (res.stale) toast('Bağlantı sınırı', 'Son bilinen liste gösteriliyor.', 'err');
@@ -378,7 +383,7 @@ async function init() {
   setStatus('Uygulamalar yükleniyor...');
   try {
     const res = await window.hub.listCatalog();
-    state.catalog = res.apps || [];
+    state.catalog = activeApps(res.apps || []);
     renderCatalog();
     if (res.stale) {
       toast(

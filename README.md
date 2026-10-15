@@ -17,6 +17,7 @@ WLAME Hub, uygulamaları tek bir yerden indirmeni ve güncel tutmanı sağlayan 
 - **Sürüm seçimi** — bir uygulamada birden fazla indirilebilir dosya varsa hangisini istediğin sorulur.
 - **Tüm sürümler taranır** — sürümlerinden *herhangi birinde* çalıştırılabilir dosya bulunan uygulamalar aktiftir; yalnızca en son sürüme bakılmaz.
 - **Otomatik güncelleme** — program arka planda çalışır; kurulu uygulamalarda yeni sürüm çıktığında indirir ve seni bilgilendirir.
+- **Temiz liste** — yalnızca sürümü yayınlanmış uygulamalar görünür; boş repolar arayüzde hiç gösterilmez.
 - **Hep güncel kütüphane** — yeni uygulamalar eklendiği anda koleksiyonda belirir, programı yenilemen gerekmez.
 - **Çevrimdışı liste** — bağlantı sınırına takılsan bile son bilinen kütüphane gösterilir.
 - **Sade arayüz** — gözü yormayan koyu gradyan tasarım, arama ve README görüntüleme dahil.
@@ -54,13 +55,16 @@ Koyu gradyan arayüz, kart tabanlı koleksiyon, sürüm seçimi ve README görü
 Gereksinimler: [Node.js](https://nodejs.org) 18+
 
 ```bash
-npm install     # bağımlılıkları kur
-npm start       # uygulamayı çalıştır
-npm test        # birim testleri (19 test)
+npm install       # bağımlılıkları kur
+npm start         # uygulamayı çalıştır
+npm test          # birim testleri (20 test)
 npm run test:api  # canlı API bütünleşik testi
-npm run smoke   # pencere + renderer duman testi
-npm run icons   # simgeleri yeniden üret
+npm run smoke     # pencere + renderer duman testi
+npm run icons     # simgeleri yeniden üret
+npm run dist      # Windows kurulum .exe'si üret (dist/)
 ```
+
+`npm run dist` çıktısı `dist/WLAME-Hub-Setup-<sürüm>.exe` dosyasıdır; bu dosyayı bir sürüme (release) eklersen kullanıcılar tek tıkla indirebilir.
 
 ### Proje yapısı
 
@@ -68,9 +72,13 @@ npm run icons   # simgeleri yeniden üret
 main/        ana süreç: pencere, tray, indirici, güncelleme kontrolü
 renderer/    arayüz (HTML/CSS/JS, çerçeve yok)
 docs/        GitHub Pages tanıtım sitesi
-test/        birim + bütünleşik testler
+test/        birim + bütünleşik + uçtan uca testler
 scripts/     simge üretimi
 ```
+
+### Yeni uygulama eklemek
+
+Ayrı bir ayar gerekmez: bir repoya indirilebilir (.exe içeren) bir sürüm yayınladığında uygulama kendiliğinden koleksiyonda görünür. İsim, açıklama ve görsel repo bilgilerinden üretilir; uygulamayı güncellemen gerekmez.
 
 ## Lisans
 
