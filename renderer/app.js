@@ -221,9 +221,11 @@ async function renderInstalled() {
         <div class="name">${escapeHtml(it.name || it.fullName)}</div>
         <div class="muted">${escapeHtml(it.assetName || '')} · ${escapeHtml(it.tag || '')} · ${new Date(it.installedAt).toLocaleString('tr-TR')}</div>
       </div>
-      <button class="btn ghost" data-act="open-folder">Klasörü aç</button>
-      <button class="btn ghost danger" data-act="remove">Listeden kaldır</button>`;
-    row.querySelector('[data-act="open-folder"]').addEventListener('click', () => window.hub.open(it.filePath));
+      <button class="btn primary" data-act="run">Çalıştır</button>
+      <button class="btn ghost" data-act="show">Klasörde göster</button>
+      <button class="btn ghost danger" data-act="remove">Kaldır</button>`;
+    row.querySelector('[data-act="run"]').addEventListener('click', () => window.hub.run(it.filePath));
+    row.querySelector('[data-act="show"]').addEventListener('click', () => window.hub.showItem(it.filePath));
     row.querySelector('[data-act="remove"]').addEventListener('click', async () => {
       state.installed = await window.hub.removeInstalled(it.fullName);
       renderInstalled();
@@ -243,8 +245,10 @@ async function renderSettings() {
   state.settings = await window.hub.getSettings();
   $('#set-autostart').checked = !!state.settings.autostart;
   $('#set-autodownload').checked = !!state.settings.autoDownloadUpdates;
+  $('#set-autorun').checked = state.settings.autoRun !== false;
   $('#set-downloaddir').textContent = state.settings.downloadDir;
-  $('#set-owner').textContent = `${state.settings.owner} koleksiyonu — kütüphane her zaman güncel tutulur.`;
+  $('#set-variants').textContent = `${state.settings.owner} koleksiyonu · ${state.catalog.length} uygulama kayıtlı.`;
+  $('#set-token').value = state.settings.token || '';
 }
 
 /* ---------- olaylar ---------- */
@@ -260,9 +264,11 @@ function bindEvents() {
     setStatus('Güncelleniyor...');
     $('#btn-refresh').disabled = true;
     try {
-      state.catalog = await window.hub.refreshCatalog();
+      const res = await window.hub.refreshCatalog();
+      state.catalog = res.apps || [];
       renderCatalog();
-      setStatus(`Güncellendi (${state.catalog.length} uygulama).`);
+      setStatus(res.stale ? 'Önbellekten gösteriliyor.' : `Güncellendi (${state.catalog.length} uygulama).`);
+      if (res.stale) toast('Bağlantı sınırı', 'Son bilinen liste gösteriliyor.', 'err');
     } catch (e) {
       toast('Bağlantı hatası', e.message, 'err');
       setStatus('Hazır.');
@@ -303,7 +309,15 @@ function bindEvents() {
   });
   $('#set-autodownload').addEventListener('change', async (e) => {
     await window.hub.setSettings({ autoDownloadUpdates: e.target.checked });
-    toast('Ayar kaydedildi', e.target.checked ? 'Güncellemeler otomatik indirilecek.' : 'Otomomatik indirme kapatıldı.');
+    toast('Ayar kaydedildi', e.target.checked ? 'Güncellemeler otomatik indirilecek.' : 'Otomatik indirme kapatıldı.');
+  });
+  $('#set-autorun').addEventListener('change', async (e) => {
+    await window.hub.setSettings({ autoRun: e.target.checked });
+    toast('Ayar kaydedildi', e.target.checked ? 'İndirme bitince uygulama otomatik açılacak.' : 'Otomatik çalıştırma kapatıldı.');
+  });
+  $('#set-token').addEventListener('change', async (e) => {
+    await window.hub.setSettings({ token: e.target.value.trim() });
+    toast('Kaydedildi', 'Erişim anahtarı güncellendi.');
   });
   $('#btn-check-now').addEventListener('click', async () => {
     setStatus('Güncelleme kontrolü yapılıyor...');
@@ -323,14 +337,17 @@ function bindEvents() {
   window.hub.onDownloadDone((p) => {
     if (p.id !== state.activeDownloadId) return;
     $('#download-strip').classList.add('hidden');
-    toast('İndirme tamamlandı', p.file, 'ok');
+    toast(
+      'İndirme tamamlandı',
+      p.launched ? 'Uygulama başlatıldı.' : p.file,
+      'ok'
+    );
     setStatus('Hazır.');
-    state.installed = window.hub.listInstalled();
     window.hub.listInstalled().then((l) => {
       state.installed = l;
       updateInstalledBadge();
+      if (state.currentView === 'installed') renderInstalled();
     });
-    if (state.currentView === 'installed') renderInstalled();
   });
   window.hub.onDownloadError((p) => {
     if (p.id !== state.activeDownloadId) return;
@@ -360,11 +377,23 @@ async function init() {
 
   setStatus('Uygulamalar yükleniyor...');
   try {
-    state.catalog = await window.hub.listCatalog();
+    const res = await window.hub.listCatalog();
+    state.catalog = res.apps || [];
     renderCatalog();
-    setStatus(`${state.catalog.length} uygulama yüklendi.`);
+    if (res.stale) {
+      toast(
+        'Çevrimdışı liste',
+        res.rateLimited
+          ? 'Şu an bağlantı sınırına takıldık; son bilinen liste gösteriliyor. Birazdan tekrar dene.'
+          : 'Sunucuya ulaşılamadı; son bilinen liste gösteriliyor.',
+        'err'
+      );
+      setStatus('Önbellekten gösteriliyor.');
+    } else {
+      setStatus(`${state.catalog.length} uygulama yüklendi.`);
+    }
   } catch (e) {
-    $('#catalog-grid').innerHTML = `<div class="empty" style="grid-column:1/-1">Bağlantı hatası, lütfen tekrar deneyin: ${escapeHtml(e.message)}</div>`;
+    $('#catalog-grid').innerHTML = `<div class="empty" style="grid-column:1/-1">Bağlantı kurulamadı, lütfen tekrar dene: ${escapeHtml(e.message)}</div>`;
     setStatus('Hata.');
   }
 }

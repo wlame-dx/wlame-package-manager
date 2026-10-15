@@ -16,16 +16,16 @@ async function checkForUpdates(store, doDownload, notify, options = {}) {
   const results = [];
 
   for (const entry of installed) {
-    let latest;
+    let releases;
     try {
-      latest = await github.api(`/repos/${entry.fullName}/releases/latest`).catch((e) => {
-        if (e.status === 404) return null;
-        throw e;
-      });
+      releases = await github.api(`/repos/${entry.fullName}/releases?per_page=30`);
     } catch (e) {
+      if (e.status === 404) continue;
       results.push({ fullName: entry.fullName, error: e.message });
       continue;
     }
+    // .exe içeren en yeni sürüm
+    const latest = (releases || []).find((r) => github.exeAssetsOf(r).length > 0);
     if (!latest) continue;
     if (!github.releaseIsNewer(latest.tag_name, entry.tag)) continue;
 

@@ -94,6 +94,13 @@
               </div>
               <input type="checkbox" id="set-autodownload" />
             </label>
+            <label class="row toggle-row">
+              <div>
+                <div>İndirince otomatik çalıştır</div>
+                <div class="muted">Paket indiği anda uygulamayı başlatır.</div>
+              </div>
+              <input type="checkbox" id="set-autorun" />
+            </label>
             <div class="row">
               <div>
                 <div>İndirme klasörü</div>
@@ -102,9 +109,16 @@
             </div>
             <div class="row">
               <div>
-                <div>Kütüphane</div>
-                <div class="muted" id="set-owner">—</div>
+                <div>Sürüm seçenekleri</div>
+                <div class="muted" id="set-variants">—</div>
               </div>
+            </div>
+            <div class="row token-row">
+              <div>
+                <div>Erişim anahtarı (opsiyonel)</div>
+                <div class="muted">Tanımlarsan liste daha hızlı ve kesintisiz güncellenir. Boş bırakabilirsin.</div>
+              </div>
+              <input id="set-token" type="password" class="select token-input" placeholder="ghp_..." autocomplete="off" />
             </div>
             <div class="row btn-row">
               <button id="btn-check-now" class="btn">Şimdi güncelleme kontrolü yap</button>

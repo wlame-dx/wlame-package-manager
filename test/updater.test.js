@@ -40,7 +40,7 @@ const release = (tag, assets) => ({ tag_name: tag, assets });
 
 test('güncelleme yoksa hiçbir şey yapmaz', async () => {
   const store = makeStore([{ fullName: 'wlame-dx/umbra', name: 'Umbra', tag: 'v1.0.0', assetName: 'a.exe' }]);
-  fakeApi({ '/repos/wlame-dx/umbra/releases/latest': release('v1.0.0', [exe('a.exe')]) });
+  fakeApi({ '/repos/wlame-dx/umbra/releases?per_page=30': [release('v1.0.0', [exe('a.exe')])] });
   const notes = [];
   const res = await updater.checkForUpdates(store, async () => assert.fail('indirme yapılmamalı'), (n) => notes.push(n));
   assert.strictEqual(res.length, 0);
@@ -49,7 +49,7 @@ test('güncelleme yoksa hiçbir şey yapmaz', async () => {
 
 test('yeni sürüm varsa otomatik indirir, bildirir ve kaydı günceller', async () => {
   const store = makeStore([{ fullName: 'wlame-dx/umbra', name: 'Umbra', tag: 'v1.0.0', assetName: 'a.exe' }]);
-  fakeApi({ '/repos/wlame-dx/umbra/releases/latest': release('v1.2.0', [exe('a.exe')]) });
+  fakeApi({ '/repos/wlame-dx/umbra/releases?per_page=30': [release('v1.2.0', [exe('a.exe')])] });
   const notes = [];
   let downloaded = null;
   const res = await updater.checkForUpdates(
@@ -72,7 +72,7 @@ test('yeni sürüm varsa otomatik indirir, bildirir ve kaydı günceller', async
 
 test('autoDownload kapalıysa sadece bildirir', async () => {
   const store = makeStore([{ fullName: 'wlame-dx/umbra', name: 'Umbra', tag: 'v1.0.0', assetName: 'a.exe' }]);
-  fakeApi({ '/repos/wlame-dx/umbra/releases/latest': release('v2.0.0', [exe('a.exe')]) });
+  fakeApi({ '/repos/wlame-dx/umbra/releases?per_page=30': [release('v2.0.0', [exe('a.exe')])] });
   const notes = [];
   const res = await updater.checkForUpdates(store, async () => assert.fail('indirme yapılmamalı'), (n) => notes.push(n), {
     autoDownload: false,
@@ -85,7 +85,7 @@ test('autoDownload kapalıysa sadece bildirir', async () => {
 
 test('kurulumdaki asset adı yoksa ilk .exe indirilir', async () => {
   const store = makeStore([{ fullName: 'wlame-dx/x', name: 'X', tag: 'v1.0.0', assetName: 'eski.exe' }]);
-  fakeApi({ '/repos/wlame-dx/x/releases/latest': release('v1.1.0', [exe('yeni.exe'), exe('b.exe')]) });
+  fakeApi({ '/repos/wlame-dx/x/releases?per_page=30': [release('v1.1.0', [exe('yeni.exe'), exe('b.exe')])] });
   let got = null;
   await updater.checkForUpdates(
     store,
@@ -99,16 +99,39 @@ test('kurulumdaki asset adı yoksa ilk .exe indirilir', async () => {
   assert.strictEqual(got, 'yeni.exe');
 });
 
+test('en yeni sürümde .exe yoksa, .exe içeren daha eski sürüm kullanılır', async () => {
+  const store = makeStore([{ fullName: 'wlame-dx/z', name: 'Z', tag: 'v1.0.0', assetName: 'a.exe' }]);
+  fakeApi({
+    '/repos/wlame-dx/z/releases?per_page=30': [
+      { tag_name: 'v3.0.0', assets: [{ name: 'kaynak.zip' }] }, // en yeni ama .exe yok
+      release('v2.0.0', [exe('a.exe')]), // .exe'li
+    ],
+  });
+  let got = null;
+  const res = await updater.checkForUpdates(
+    store,
+    async ({ exeAsset }) => {
+      got = exeAsset.name;
+      return 'f';
+    },
+    () => {},
+    { autoDownload: true }
+  );
+  assert.strictEqual(res.length, 1);
+  assert.strictEqual(res[0].newTag, 'v2.0.0');
+  assert.strictEqual(got, 'a.exe');
+});
+
 test('release 404 ise sessiz geçer', async () => {
   const store = makeStore([{ fullName: 'wlame-dx/gone', name: 'Gone', tag: 'v1.0.0' }]);
-  fakeApi({ '/repos/wlame-dx/gone/releases/latest': '__404__' });
+  fakeApi({ '/repos/wlame-dx/gone/releases?per_page=30': '__404__' });
   const res = await updater.checkForUpdates(store, async () => {}, () => {});
   assert.strictEqual(res.length, 0);
 });
 
 test('release .exe içermiyorsa indirmez', async () => {
   const store = makeStore([{ fullName: 'wlame-dx/y', name: 'Y', tag: 'v1.0.0', assetName: 'a.exe' }]);
-  fakeApi({ '/repos/wlame-dx/y/releases/latest': release('v2.0.0', [{ name: 'a.zip' }]) });
+  fakeApi({ '/repos/wlame-dx/y/releases?per_page=30': [release('v2.0.0', [{ name: 'a.zip' }])] });
   const res = await updater.checkForUpdates(store, async () => assert.fail('exe yokken indirme olmaz'), () => {});
   assert.strictEqual(res.length, 0);
 });

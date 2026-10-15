@@ -209,6 +209,8 @@ body {
 .row { padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
 .row:last-child { border-bottom: none; }
 .toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 20px; cursor: pointer; }
+.token-row { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.token-input { width: 220px; }
 .toggle-row input { width: 40px; height: 22px; accent-color: #b9b9c4; cursor: pointer; }
 .btn-row { display: flex; }
 .btn-row .btn { flex: 0 0 auto; }

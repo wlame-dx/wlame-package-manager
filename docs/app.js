@@ -31,12 +31,15 @@ async function loadCatalog() {
 
   const items = await Promise.all(
     usable.map(async (repo) => {
-      let release = null;
+      let releases = [];
       try {
-        release = await api(`/repos/${repo.full_name}/releases/latest`);
+        releases = await api(`/repos/${repo.full_name}/releases?per_page=30`);
       } catch (_) {
-        /* sürüm yok */
+        /* sürüm yok / limit */
       }
+      // .exe içeren en yeni sürüm (yoksa en yeni sürüm)
+      const withExe = releases.find((r) => (r.assets || []).some((a) => /\.exe$/i.test(a.name)));
+      const release = withExe || releases[0] || null;
       const exes = (release?.assets || []).filter((a) => /\.exe$/i.test(a.name));
       return {
         name: repo.name,

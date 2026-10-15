@@ -17,7 +17,7 @@ function defaultFile() {
 class Store {
   constructor(file = defaultFile()) {
     this.file = file;
-    this.data = { installed: {}, settings: { autostart: true, autoDownloadUpdates: true } };
+    this.data = { installed: {}, settings: { autostart: true, autoDownloadUpdates: true, autoRun: true } };
     this.load();
   }
 
@@ -62,7 +62,7 @@ class Store {
   }
 
   getSettings() {
-    return Object.assign({ autostart: true, autoDownloadUpdates: true }, this.data.settings);
+    return Object.assign({ autostart: true, autoDownloadUpdates: true, autoRun: true }, this.data.settings);
   }
 
   setSettings(patch) {

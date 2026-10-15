@@ -17,6 +17,47 @@ let store = null;
 let updateTimer = null;
 let catalogCache = null;
 
+/* ---------- katalog önbelleği (limit dolarsa son liste gösterilir) ---------- */
+function catalogCachePath() {
+  return path.join(app.getPath('userData'), 'catalog.json');
+}
+
+function readCatalogCache() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(catalogCachePath(), 'utf8'));
+    if (Array.isArray(raw.apps) && raw.apps.length) return raw;
+  } catch (_) {}
+  return null;
+}
+
+function writeCatalogCache(apps) {
+  try {
+    fs.writeFileSync(catalogCachePath(), JSON.stringify({ at: Date.now(), apps }), 'utf8');
+  } catch (_) {}
+}
+
+async function loadCatalog(force = false) {
+  if (!force && catalogCache) return { apps: catalogCache, stale: false };
+  try {
+    catalogCache = await github.buildCatalog();
+    writeCatalogCache(catalogCache);
+    return { apps: catalogCache, stale: false };
+  } catch (e) {
+    const cached = readCatalogCache();
+    if (cached) {
+      catalogCache = cached.apps;
+      return {
+        apps: cached.apps,
+        stale: true,
+        at: cached.at,
+        rateLimited: !!e.rateLimited,
+        error: e.message,
+      };
+    }
+    throw e;
+  }
+}
+
 /* ---------- pencere ---------- */
 function createWindow() {
   win = new BrowserWindow({
@@ -95,16 +136,9 @@ function scheduleUpdateChecks() {
 
 /* ---------- IPC ---------- */
 function registerIpc() {
-  ipcMain.handle('catalog:list', async () => {
-    if (catalogCache) return catalogCache; // ilk yüklemeden sonra API'yi yorma
-    catalogCache = await github.buildCatalog();
-    return catalogCache;
-  });
+  ipcMain.handle('catalog:list', () => loadCatalog(false));
 
-  ipcMain.handle('catalog:refresh', async () => {
-    catalogCache = await github.buildCatalog();
-    return catalogCache;
-  });
+  ipcMain.handle('catalog:refresh', () => loadCatalog(true));
 
   ipcMain.handle('releases:list', (_e, fullName) => github.listReleases(fullName));
 
@@ -139,8 +173,18 @@ function registerIpc() {
           logo,
           description,
         });
-        send('download:done', { id, fullName, file: dest });
-        notify('İndirme tamamlandı', `${assetName} indirildi.`);
+        // İndirme bitince doğrudan çalıştır (ayar açıksa)
+        const settings = store.getSettings();
+        const autoRun = settings.autoRun !== false && /\.exe$/i.test(dest);
+        if (autoRun) {
+          shell.openPath(dest).then((err) => {
+            if (err) notify('Uygulama başlatılamadı', err);
+          });
+          notify('İndirme tamamlandı', `${assetName} indirildi ve başlatıldı.`);
+        } else {
+          notify('İndirme tamamlandı', `${assetName} indirildi.`);
+        }
+        send('download:done', { id, fullName, file: dest, launched: autoRun });
       })
       .catch((e) => send('download:error', { id, fullName, error: e.message }));
 
@@ -154,6 +198,11 @@ function registerIpc() {
   });
 
   ipcMain.handle('shell:open', (_e, p) => shell.openPath(p));
+  ipcMain.handle('shell:run', (_e, p) => shell.openPath(p));
+  ipcMain.handle('shell:showItem', (_e, p) => {
+    shell.showItemInFolder(p);
+    return true;
+  });
   ipcMain.handle('shell:openExternal', (_e, url) => shell.openExternal(url));
 
   ipcMain.handle('installed:list', () => store.listInstalled());
@@ -170,6 +219,10 @@ function registerIpc() {
   ipcMain.handle('settings:set', (_e, patch) => {
     const s = store.setSettings(patch);
     applyAutostart(s.autostart);
+    if ('token' in patch) {
+      github.setToken(patch.token);
+      catalogCache = null; // token değişince katalog yeniden çekilsin
+    }
     return s;
   });
 
@@ -223,6 +276,7 @@ if (!gotLock) {
   app.whenReady().then(() => {
     store = new Store();
     const settings = store.getSettings();
+    github.setToken(settings.token); // opsiyonel: ayarlardan token
     applyAutostart(settings.autostart);
     registerIpc();
     createWindow();

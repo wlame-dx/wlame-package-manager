@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld('hub', {
   startDownload: (payload) => ipcRenderer.invoke('download:start', payload),
   pickFolder: () => ipcRenderer.invoke('download:pickFolder'),
   open: (p) => ipcRenderer.invoke('shell:open', p),
+  run: (p) => ipcRenderer.invoke('shell:run', p),
+  showItem: (p) => ipcRenderer.invoke('shell:showItem', p),
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
   listInstalled: () => ipcRenderer.invoke('installed:list'),
   removeInstalled: (fullName) => ipcRenderer.invoke('installed:remove', fullName),

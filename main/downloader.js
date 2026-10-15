@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { pipeline } = require('stream/promises');
-const { Readable } = require('stream');
+const { Readable, Transform } = require('stream');
 
 /** 1234 -> "1.2 MB" */
 function humanSize(bytes) {
@@ -30,7 +30,11 @@ function safeFileName(name) {
  */
 async function downloadFile(url, destPath, onProgress) {
   const res = await fetch(url, {
-    headers: { 'User-Agent': 'wlame-package-manager' },
+    headers: {
+      'User-Agent': 'wlame-package-manager',
+      // API asset adresleri JSON yerine dosyanın kendisini döndürsün
+      Accept: 'application/octet-stream',
+    },
     redirect: 'follow',
   });
   if (!res.ok) throw new Error(`İndirme başarısız: HTTP ${res.status}`);
@@ -40,28 +44,23 @@ async function downloadFile(url, destPath, onProgress) {
   const tmp = `${destPath}.part`;
   let received = 0;
 
-  const out = fs.createWriteStream(tmp);
-  const tracked = new Readable({
-    read() {},
+  // İlerleme sayacı: veriyi olduğu gibi geçirir, sadece baytları sayar.
+  const counter = new Transform({
+    transform(chunk, _enc, cb) {
+      received += chunk.length;
+      if (onProgress) {
+        onProgress({
+          percent: total ? Math.min(100, (received / total) * 100) : 0,
+          received,
+          total,
+        });
+      }
+      cb(null, chunk);
+    },
   });
-  // kaynak stream'i sar: okunan her parçayı sayaçla ilet
-  const src = Readable.fromWeb(res.body);
-  src.on('data', (chunk) => {
-    received += chunk.length;
-    if (onProgress) {
-      onProgress({
-        percent: total ? Math.min(100, (received / total) * 100) : 0,
-        received,
-        total,
-      });
-    }
-    tracked.push(chunk);
-  });
-  src.on('end', () => tracked.push(null));
-  src.on('error', (e) => tracked.destroy(e));
 
   try {
-    await pipeline(tracked, out);
+    await pipeline(Readable.fromWeb(res.body), counter, fs.createWriteStream(tmp));
   } catch (e) {
     try {
       fs.unlinkSync(tmp);

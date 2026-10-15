@@ -1,14 +1,21 @@
 // GitHub API katmanı — saf, Electron'a bağlı değil (test edilebilir).
 const config = require('./config');
 
+let _token = null;
+
+/** İsteğe bağlı erişim anahtarı (rate limit'i yükseltir). */
+function setToken(t) {
+  _token = t || null;
+}
+
 function headers() {
   const h = {
     Accept: 'application/vnd.github+json',
     'User-Agent': config.userAgent,
     'X-GitHub-Api-Version': '2022-11-28',
   };
-  // Opsiyonel token (rate limit için)
-  if (process.env.GITHUB_TOKEN) h.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  const token = process.env.GITHUB_TOKEN || _token;
+  if (token) h.Authorization = `Bearer ${token}`;
   return h;
 }
 
@@ -17,6 +24,7 @@ async function api(path) {
   if (!res.ok) {
     const err = new Error(`GitHub API ${res.status} for ${path}`);
     err.status = res.status;
+    err.rateLimited = res.status === 403 && res.headers.get('x-ratelimit-remaining') === '0';
     throw err;
   }
   return res.json();
@@ -77,23 +85,24 @@ function releaseIsNewer(candidateTag, installedTag) {
   return false; // karşılaştırılamıyorsa sessiz güncelleme yapma
 }
 
-/** Tam katalog: repolar + son release + logo + indirilebilirlik. */
+/** Tam katalog: repolar + indirilebilir (.exe'li) release + logo + indirilebilirlik. */
 async function buildCatalog() {
   const repos = await listRepos();
   const catalog = await Promise.all(
     repos.map(async (repo) => {
-      let release = null;
-      let exeAssets = [];
+      let releases = [];
       let releaseError = null;
       try {
-        release = await api(`/repos/${repo.full_name}/releases/latest`).catch((e) => {
-          if (e.status === 404) return null; // release'i olmayan repo
-          throw e;
-        });
-        exeAssets = exeAssetsOf(release);
+        releases = await api(`/repos/${repo.full_name}/releases?per_page=30`);
       } catch (e) {
         releaseError = e.message;
       }
+      const latest = releases[0] || null;
+      // Tüm sürümlere bakılır: herhangi birinde .exe varsa uygulama aktiftir.
+      const downloadableRelease = releases.find((r) => exeAssetsOf(r).length > 0) || null;
+      const active = downloadableRelease || latest;
+      const exeAssets = exeAssetsOf(active);
+
       return {
         fullName: repo.full_name,
         name: repo.name,
@@ -104,10 +113,11 @@ async function buildCatalog() {
         updatedAt: repo.updated_at,
         logo: logoUrl(repo),
         htmlUrl: repo.html_url,
-        latestTag: release ? release.tag_name : null,
-        latestName: release ? release.name : null,
-        publishedAt: release ? release.published_at : null,
-        // İndirilebilirlik: son release'te .exe varsa true
+        latestTag: active ? active.tag_name : null,
+        latestName: active ? active.name : null,
+        publishedAt: active ? active.published_at : null,
+        releaseCount: releases.length,
+        // İndirilebilirlik: herhangi bir sürümde .exe varsa true
         downloadable: exeAssets.length > 0,
         exeAssets: exeAssets.map((a) => ({
           name: a.name,
@@ -119,7 +129,8 @@ async function buildCatalog() {
       };
     })
   );
-  return catalog;
+  // Aktif (indirilebilir) uygulamalar önce gelsin
+  return catalog.sort((a, b) => Number(b.downloadable) - Number(a.downloadable) || b.stars - a.stars);
 }
 
 /** Bir reponun tüm release'leri (indirilebilir olanlar). */
@@ -147,6 +158,7 @@ async function getReadme(fullName) {
 
 module.exports = {
   api,
+  setToken,
   listRepos,
   isExeAsset,
   exeAssetsOf,

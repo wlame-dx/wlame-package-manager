@@ -40,7 +40,7 @@ test('upsert + list + remove', () => {
 test('ayarlar kalıcı ve merge olur', () => {
   const f = tmpFile();
   const s = new Store(f);
-  assert.deepStrictEqual(s.getSettings(), { autostart: true, autoDownloadUpdates: true });
+  assert.deepStrictEqual(s.getSettings(), { autostart: true, autoDownloadUpdates: true, autoRun: true });
   s.setSettings({ autostart: false });
   const s2 = new Store(f);
   assert.strictEqual(s2.getSettings().autostart, false);
