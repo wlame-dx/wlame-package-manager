@@ -26,7 +26,22 @@ async function api(path) {
 }
 
 async function loadCatalog() {
-  const repos = await api(`/users/${OWNER}/repos?per_page=100&sort=updated`);
+  let repos;
+  try {
+    repos = await api(`/users/${OWNER}/repos?per_page=100&sort=updated`);
+  } catch (e) {
+    // Bağlantı sınırı / ağ hatası → son bilinen listeyi göster
+    const cached = readCache();
+    if (cached) {
+      all = cached.items;
+      $('#refresh-time').textContent = new Date(cached.at).toLocaleString('tr-TR') + ' (önbellek)';
+      updateStats();
+      render();
+      note('Liste şu an yenilenemedi, son bilinen hâli gösteriliyor.');
+      return;
+    }
+    throw e;
+  }
   const usable = repos.filter((r) => !r.fork && !r.archived);
 
   const items = await Promise.all(
@@ -58,10 +73,39 @@ async function loadCatalog() {
 
   all = items.sort((a, b) => Number(b.downloadable) - Number(a.downloadable) || b.stars - a.stars);
   $('#refresh-time').textContent = new Date().toLocaleString('tr-TR');
+  writeCache(all);
+  updateStats();
+  render();
+}
+
+const CACHE_KEY = 'wlame-hub-catalog-v1';
+
+function writeCache(items) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), items }));
+  } catch (_) {}
+}
+
+function readCache() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (raw && Array.isArray(raw.items) && raw.items.length) return raw;
+  } catch (_) {}
+  return null;
+}
+
+function updateStats() {
   $('#stat-repos').textContent = all.length;
   $('#stat-downloads').textContent = all.filter((i) => i.downloadable).length;
   $('#stat-wl').textContent = all.reduce((s, i) => s + i.stars, 0);
-  render();
+}
+
+function note(text) {
+  const el = document.getElementById('catalog-note');
+  if (el) {
+    el.textContent = text;
+    el.classList.remove('hidden');
+  }
 }
 
 function render() {
