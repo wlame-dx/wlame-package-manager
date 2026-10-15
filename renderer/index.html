@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' data: https://opengraph.githubassets.com https://avatars.githubusercontent.com https://github.com https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline'; font-src 'self'" />
+  <title>WLAME Hub</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Üst bar -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-logo"></span>
+        <span class="brand-name">WLAME <b>Hub</b></span>
+      </div>
+      <div class="search-wrap">
+        <input id="search" type="search" placeholder="Uygulama ara..." autocomplete="off" />
+      </div>
+      <div class="topbar-actions">
+        <button id="btn-updates" class="icon-btn" title="Güncelleme kontrolü">⟳</button>
+        <button id="btn-refresh" class="icon-btn" title="Katalogu yenile">⟳</button>
+        <button id="btn-settings" class="icon-btn" title="Ayarlar">⚙</button>
+        <span class="win-controls">
+          <button id="win-min" title="Küçült">─</button>
+          <button id="win-close" title="Kapat">✕</button>
+        </span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- Sol menü -->
+      <nav class="sidebar">
+        <button class="nav-item active" data-view="store">
+          <span class="nav-ico">▣</span> Mağaza
+        </button>
+        <button class="nav-item" data-view="installed">
+          <span class="nav-ico">⬇</span> İndirilenler
+          <span id="installed-badge" class="badge hidden">0</span>
+        </button>
+        <div class="sidebar-foot">
+          <div class="owner-chip">
+            <img id="owner-avatar" alt="" src="" />
+            <div>
+              <div id="owner-name">wlame-dx</div>
+              <div class="muted">Yayıncı</div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <!-- İçerik -->
+      <main class="content">
+        <!-- MAĞAZA -->
+        <section id="view-store" class="view">
+          <div class="hero">
+            <h1>Uygulamaların</h1>
+            <p class="muted">Keşfet, tek tıkla indir ve güncellemeleri otomatik al — hepsi tek yerden.</p>
+          </div>
+          <div id="catalog-grid" class="grid">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          </div>
+        </section>
+
+        <!-- İNDİRİLENLER -->
+        <section id="view-installed" class="view hidden">
+          <div class="hero">
+            <h1>İndirilenler</h1>
+            <p class="muted">Kurulu/indirilen paketler ve otomatik güncelleme durumu.</p>
+          </div>
+          <div id="installed-list" class="list"></div>
+        </section>
+
+        <!-- AYARLAR -->
+        <section id="view-settings" class="view hidden">
+          <div class="hero">
+            <h1>Ayarlar</h1>
+          </div>
+          <div class="settings-card">
+            <label class="row toggle-row">
+              <div>
+                <div>Bilgisayar açılınca başlat</div>
+                <div class="muted">Program arka planda otomatik çalışır.</div>
+              </div>
+              <input type="checkbox" id="set-autostart" />
+            </label>
+            <label class="row toggle-row">
+              <div>
+                <div>Güncellemeleri otomatik indir</div>
+                <div class="muted">Yeni sürüm çıktığında sessizce indirir ve bildirir.</div>
+              </div>
+              <input type="checkbox" id="set-autodownload" />
+            </label>
+            <div class="row">
+              <div>
+                <div>İndirme klasörü</div>
+                <div class="muted" id="set-downloaddir">—</div>
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <div>Kütüphane</div>
+                <div class="muted" id="set-owner">—</div>
+              </div>
+            </div>
+            <div class="row btn-row">
+              <button id="btn-check-now" class="btn">Şimdi güncelleme kontrolü yap</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Alt durum çubuğu -->
+    <footer class="statusbar">
+      <span id="status-text">Hazır.</span>
+      <span id="download-strip" class="download-strip hidden"></span>
+    </footer>
+  </div>
+
+  <!-- Asset seçim modalı (2+ .exe) -->
+  <div id="modal-assets" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="modal-title">Hangi dosyayı indirsin?</h3>
+        <button class="icon-btn" id="modal-close">✕</button>
+      </div>
+      <p class="muted" id="modal-sub"></p>
+      <div id="asset-options" class="asset-options"></div>
+      <div class="modal-foot">
+        <span class="muted" id="modal-hint">Bir sürüm de seçebilirsin:</span>
+        <select id="release-select" class="select"></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- README modalı -->
+  <div id="modal-readme" class="modal-backdrop hidden">
+    <div class="modal modal-lg">
+      <div class="modal-head">
+        <h3 id="readme-title">README</h3>
+        <button class="icon-btn" id="readme-close">✕</button>
+      </div>
+      <pre id="readme-body" class="readme-body"></pre>
+    </div>
+  </div>
+
+  <div id="toasts" class="toasts"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

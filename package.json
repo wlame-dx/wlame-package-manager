@@ -1,0 +1,19 @@
+{
+  "name": "wlame-package-manager",
+  "productName": "WLAME Hub",
+  "version": "1.0.0",
+  "description": "WLAME Hub — Windows uygulama merkezi: keşfet, tek tıkla indir, güncellemeleri otomatik al.",
+  "main": "main/main.js",
+  "author": "wlame-dx",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test \"test/*.test.js\"",
+    "test:api": "node test/integration.api.js",
+    "icons": "node scripts/gen-icon.js",
+    "smoke": "electron . --smoke"
+  },
+  "devDependencies": {
+    "electron": "^44.7.2"
+  }
+}

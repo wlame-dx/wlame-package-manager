@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WLAME Hub — Windows Uygulama Merkezi</title>
+  <meta name="description" content="WLAME Hub ile uygulamaları keşfet, tek tıkla indir ve güncellemeleri otomatik al. Hızlı, sade ve ücretsiz Windows uygulama merkezi." />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2317171b'/><path d='M7 10l3 12 3-8 3 8 3-12' stroke='%23eee' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><path d='M22 10l3 12 3-8' stroke='%23eee' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round' opacity='.5'/></svg>" />
+</head>
+<body>
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="#">
+        <span class="brand-logo"></span>
+        WLAME <b>Hub</b>
+      </a>
+      <nav class="links">
+        <a href="#apps">Uygulamalar</a>
+        <a href="#features">Özellikler</a>
+        <a href="#download">İndir</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-inner">
+      <div class="hero-tag">WINDOWS · ÜCRETSİZ · TEK TIKLA</div>
+      <h1>Uygulamalarını<br /><span class="grad">tek merkezden yönet</span></h1>
+      <p>
+        WLAME Hub, sevdiğin uygulamaları keşfetmeni, tek tıkla indirmeni ve
+        güncellemelerin otomatik gelmesini sağlar. Kurulum derdi yok, karmaşa yok —
+        indir, kullan.
+      </p>
+      <div class="hero-cta">
+        <a class="btn primary" href="#download">Uygulamayı indir</a>
+        <a class="btn ghost" href="#apps">Koleksiyonu gör</a>
+      </div>
+      <div class="hero-stats" id="hero-stats">
+        <div class="stat"><span id="stat-repos">—</span><label>uygulama</label></div>
+        <div class="stat"><span id="stat-downloads">—</span><label>hemen indirilebilir</label></div>
+        <div class="stat"><span id="stat-wl">—</span><label>toplam ★</label></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="apps" class="section">
+    <div class="section-head">
+      <h2>Koleksiyon</h2>
+      <p class="muted">Son güncelleme: <span id="refresh-time">—</span></p>
+      <div class="toolbar">
+        <input id="q" type="search" placeholder="Uygulama ara..." />
+        <button id="refresh" class="btn small">⟳ Yenile</button>
+      </div>
+    </div>
+    <div id="grid" class="grid">
+      <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+    </div>
+    <p id="grid-empty" class="empty hidden">Eşleşen uygulama yok.</p>
+  </section>
+
+  <section id="features" class="section">
+    <div class="section-head"><h2>Neler yapar?</h2></div>
+    <div class="features">
+      <div class="feature"><div class="f-ico">⬇</div><h3>Tek tıkla indir</h3><p>Bulduğun uygulamayı tek tıkla indir; dosyalar düzenli bir klasörde toplanır, karışıklık olmaz.</p></div>
+      <div class="feature"><div class="f-ico">🗂</div><h3>İstediğin sürümü seç</h3><p>Bir uygulamanın farklı sürümleri veya sürümleri varsa hangisini indirmek istediğini sorar — seçim senin.</p></div>
+      <div class="feature"><div class="f-ico">⟳</div><h3>Otomatik güncellemeler</h3><p>Yeni sürüm çıktığında Hub seni bilgilendirir; istersen güncellemeler arka planda sessizce indirilir.</p></div>
+      <div class="feature"><div class="f-ico">✦</div><h3>Hep güncel kütüphane</h3><p>Yeni uygulamalar eklendiği anda koleksiyonda belirir. Uygulamayı güncellemana bile gerek kalmaz.</p></div>
+      <div class="feature"><div class="f-ico">☾</div><h3>Sade ve şık tasarım</h3><p>Gözü yormayan koyu gradyan arayüz; arama, sürüm geçmişi ve ayrıntılı bilgi hepsi bir tık uzağında.</p></div>
+      <div class="feature"><div class="f-ico">☰</div><h3>Arka planda çalışır</h3><p>Sistem tepsisinde yerini alır, bilgisayarın açılınca kendiliğinden başlar; sen farkında bile olmazsın.</p></div>
+    </div>
+  </section>
+
+  <section id="download" class="section cta-section">
+    <div class="cta-card">
+      <h2>WLAME Hub'ı indir</h2>
+      <p class="muted">Windows 10/11 · ücretsiz · açık kaynak</p>
+      <div class="cta-btns">
+        <a class="btn primary" href="https://github.com/wlame-dx/wlame-package-manager/releases/latest" target="_blank" rel="noopener">Son sürümü indir</a>
+        <a class="btn ghost" href="https://github.com/wlame-dx/wlame-package-manager#readme" target="_blank" rel="noopener">Nasıl kurulur?</a>
+      </div>
+      <p class="muted">Kaynak kod herkesin gözleri önünde — güvenli ve şeffaf.</p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div>© 2026 <b>wlame-dx</b> · WLAME Hub · MIT</div>
+    <div class="muted">Gizlilik yok, reklam yok, takip yok — sadece uygulamalar.</div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
